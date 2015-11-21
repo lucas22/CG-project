@@ -1,13 +1,19 @@
 // Height map generator
-//---------------------
-// Reads an 8-bit binary file and turns the information into a 3D surface
-// by Lucas Parzianello
+/*---------------------
+ * Reads an 8-bit binary file and turns the information into a 3D surface
+ * Parameters:
+ * 	hmSource: heightmap binary source file
+ * 	heightMult: heigth multiplier (default = 1)
+ * 	maxNumPoints: maximum of vertices that can be created (default = 1M)
+ * by Lucas Parzianello - github.com/lucas22
+*/
 
-function heightMap() {
+function heightMap(hmSource, heightMult=1, maxNumPoints=1000000) {
 	// Getting image properties
 	var img = new Image();
-	img.src = "scene/s01.bin";
-	hmWidth = 64;	//img.width;
+	img.src = hmSource;
+	// TODO: unfix these values
+	hmWidth = 64;	//img.width; // not working because hmSource is a binary file
 	hmHeight = 64;	//img.height;
 		
 	// Extracting info from image
@@ -18,11 +24,9 @@ function heightMap() {
 	oReq.onload = function (oEvent) {
 		var arrayBuffer = oReq.response;
 		var binaryString = '';
-		
 		if (arrayBuffer) {
 			byteArrayImg = new Uint8Array(arrayBuffer); // Data saved in byteArrayImg
-			console.log(byteArrayImg[2400]);
-			terrainBuilder();
+			terrainBuilder(heightMult, maxNumPoints);
 		}
 		else {
 			console.log("Error loading heightmap. Reloading page...")
@@ -34,38 +38,51 @@ function heightMap() {
 	oReq.send(null);
 }
 
-// Mesh construction
-function terrainBuilder () {
-	var a=0, b=0, x, z, k, up=true;
-	while(true){
-		x = a;
-		z = b;
-		vTerrain.push(vec3(x,z,getHeight(x,z)));
-
-		x = a;
-		z = b+1;
-		vTerrain.push(vec3(x,z,getHeight(x,z)));
-
-		if(x==(hmWidth-1) && z==(hmHeight-1)) break;
-		
-		if ((x==0 && b!=0) || x==hmWidth-1){ // extra vertice
-			x = a;
-			z = b+2;
-			vTerrain.push(vec3(x,z,getHeight(x,z)));
-			up = !up;
-			b++;
-		}
-
-		if(up) a++;
-		else a--;
-	}
-	for (k=0; k<vTerrain.length; k++){
-		vTerrain[k][0] = (vTerrain[k][0]-32)*0.12;
-		vTerrain[k][1] = (vTerrain[k][1]-72)*0.12;
-		vTerrain[k][2] /= 50;
-	}
+// Mesh constructor
+function terrainBuilder (heightMult, maxNumPoints) {
+	var maxHeight = 0, nPoints=0, over=false;
 	
-}
-function getHeight(x, z){
-	return byteArrayImg[(z*hmWidth)+x];
+	buildMesh();
+	normHeights();
+	return;
+	//-----
+	
+	function getHeight(x, z) {
+		return byteArrayImg[(z*hmWidth)+x];
+	}
+	function normHeights() {
+		var ratio = heightMult/maxHeight;
+		for (k=0; k<vTerrain.length; k++) vTerrain[k][2] *= ratio;
+	}
+	function pushVector (x, z){
+		var y = getHeight(x,z);
+		x = (x - hmWidth/2) * 0.15;
+		z = (z - hmWidth) * 0.15;
+		if(y > maxHeight) maxHeight = y;
+		if(nPoints <= maxNumPoints){
+			vTerrain.push(vec3(x,z,y));
+			nPoints++;
+		}
+		else{
+			console.log("Heightmap incomplete: over " + maxNumPoints + " points");	
+			over=true;
+		}
+	}
+	function buildMesh(){
+		var a=0, b=0, up=true;
+		while(true){
+			pushVector(a, b);
+			pushVector(a, b+1);
+			
+			if ((a==0 && b!=0) || a==hmWidth-1){ 		// end-line extra vertice
+				if(a==(hmWidth-1) && (b+1)==(hmHeight-1)) break;	// reached end
+				pushVector(a, b+2);
+				up = !up;			// flips building direction
+				b++;
+			}
+			if(up) a++;
+			else a--;
+			if(over) return;
+		}
+	}
 }

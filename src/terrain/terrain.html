@@ -10,10 +10,11 @@
 	uniform int cindex;
 
 	void main(){
-		gl_PointSize = 5.0;
+		gl_PointSize = 3.0;
 		gl_Position = mvpMatrix * vPosition;
-		if(cindex==0) fColor = vec4(0.0,0.6,0.2,1.0);
-		else fColor = vec4(0.0,0.0,0.0,1.0);
+		if(cindex==0) fColor = vec4(0.0,0.6,0.2,1.0); 	// green
+		if(cindex==1) fColor = vec4(0.75,0.85,1.0,1.0);	// light blue
+		else fColor = vec4(0.0,0.0,0.0,1.0); 			// black
 	}
 </script>
 
