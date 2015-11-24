@@ -1,3 +1,4 @@
+"use strict"
 // Height map generator
 /*---------------------
  * Reads an 8-bit binary file and turns the information into a 3D surface
@@ -13,7 +14,7 @@ function heightMap(hmSource, heightMult=1, maxNumPoints=1000000) {
 	var img = new Image();
 	img.src = hmSource;
 	// TODO: unfix these values
-	hmWidth = 64;	//img.width; // not working because hmSource is a binary file
+	hmWidth = 64;	//img.width; // img.x not working 'cause hmSource is binary file
 	hmHeight = 64;	//img.height;
 		
 	// Extracting info from image
@@ -40,32 +41,36 @@ function heightMap(hmSource, heightMult=1, maxNumPoints=1000000) {
 
 // Mesh constructor
 function terrainBuilder (heightMult, maxNumPoints) {
-	var maxHeight = 0, nPoints=0, over=false;
+	var maxHeight = 0, nPoints=0, breakMesh=false, k;
 	
 	buildMesh();
 	normHeights();
+	console.log("DONE");
 	return;
 	//-----
 	
-	function getHeight(x, z) {
-		return byteArrayImg[(z*hmWidth)+x];
+	function getHeight(x, y) {	// returns the height of the coordinate
+		return byteArrayImg[(y*hmWidth)+x];
 	}
-	function normHeights() {
+	function normHeights() {	// normalize all the heights and multiply them
 		var ratio = heightMult/maxHeight;
 		for (k=0; k<vTerrain.length; k++) vTerrain[k][2] *= ratio;
 	}
-	function pushVector (x, z){
-		var y = getHeight(x,z);
-		x = (x - hmWidth/2) * 0.15;
-		z = (z - hmWidth) * 0.15;
-		if(y > maxHeight) maxHeight = y;
+	function pushVector (x, y){	// push data to position and texture arrays
+		var z = getHeight(x,y), txt;
+		x /= hmWidth;	// Normalize x and y to [0,1] interval
+		y /= hmHeight;
+		if(z > maxHeight) maxHeight = z;
 		if(nPoints <= maxNumPoints){
-			vTerrain.push(vec3(x,z,y));
+			vTerrain.push(vec3(x,y,z));
+			txt = vec2(x,y)
+			texCoordsArray.push(txt);		// push texture coord
+			if(txt[0]>1 || txt[1]>1) console.log(txt); // nothing should print here
 			nPoints++;
 		}
 		else{
 			console.log("Heightmap incomplete: over " + maxNumPoints + " points");	
-			over=true;
+			breakMesh=true;
 		}
 	}
 	function buildMesh(){
@@ -82,7 +87,7 @@ function terrainBuilder (heightMult, maxNumPoints) {
 			}
 			if(up) a++;
 			else a--;
-			if(over) return;
+			if(breakMesh) return;
 		}
 	}
 }

@@ -1,13 +1,19 @@
 "use strict";
 
 // General
-var canvas, gl, cindex, maxNumPoints = 100000;
+var canvas, gl, cindex, program, maxNumPoints = 100000;
 
 // Mesh and texturing
 var hmWidth, hmHeight;	// Heigth map image properties
 var vTerrain = [], byteArrayImg = [];	// terrain shape vars
+var texCoord = [
+    vec2(0, 0),
+    vec2(0, 1),
+    vec2(1, 1),
+    vec2(1, 0)
+];
 var texCoordsArray = [], terTexture;	// terrain texture vars
-var vControlVertexBuffer = [];
+var vControlVertexBuffer = [], tBuffer = [];
 
 // Projection
 var m_inc, mvpMatrix, mvpMatrixLoc, rotationMatrix;
@@ -31,6 +37,24 @@ function mouseMotion( x,  y) {
 	}
 }
 
+function configureTexture( image ) {
+	var texture;
+    texture = gl.createTexture();
+    gl.bindTexture( gl.TEXTURE_2D, texture );
+    
+    //Flips the source data along Y axis when texImage2D or texSubImage2D are called when param is true. The initial value for param is false.
+    //gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    
+    gl.texImage2D( gl.TEXTURE_2D, 0, gl.RGB,
+         gl.RGB, gl.UNSIGNED_BYTE, image );
+    gl.generateMipmap( gl.TEXTURE_2D );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR );
+    //gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST_MIPMAP_LINEAR );
+    //gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST );
+    gl.texParameteri( gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST );
+
+    gl.uniform1i(gl.getUniformLocation(program, "texture"), 0);
+}
 
 window.onload = function init() {
 	/// Initialize canvas
@@ -45,32 +69,34 @@ window.onload = function init() {
     gl.enable(gl.DEPTH_TEST);
     
     //  Load shaders and initialize attribute buffers
-    var program = initShaders( gl, "vertex-shader", "fragment-shader" );
+    program = initShaders( gl, "vertex-shader", "fragment-shader" );
     gl.useProgram( program );
 	}
+	
+	//textureCoord();
+	heightMap("scene/s01.bin", 0.2);	// Builds mesh from heightmap file
+	
 	
 	/// Initialize buffers
 	{
 	// Colors
-	
 	cindex = gl.getUniformLocation(program,"cindex");
-	
-    var cBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, cBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(colors), gl.STATIC_DRAW );
-	
-    var vColor = gl.getAttribLocation( program, "vColor" );
-    gl.vertexAttribPointer( vColor, 4, gl.FLOAT, false, 0, 0 );
-    gl.enableVertexAttribArray( vColor );
 	
 	// Vertices
 	vControlVertexBuffer = gl.createBuffer();
-    gl.bindBuffer( gl.ARRAY_BUFFER, vControlVertexBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, 8*maxNumPoints, gl.STATIC_DRAW );
-	
     var vPosition = gl.getAttribLocation( program, "vPosition" );
+	
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
+	
+	// Textures
+	tBuffer = gl.createBuffer();
+    gl.bindBuffer( gl.ARRAY_BUFFER, tBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(texCoordsArray), gl.STATIC_DRAW );
+	
+    var vTexCoord = gl.getAttribLocation( program, "vTexCoord" );
+    gl.vertexAttribPointer( vTexCoord, 2, gl.FLOAT, false, 0, 0 );
+    //gl.enableVertexAttribArray( vTexCoord );	// <- MAKES RENDER DISAPPEAR
 	
 	// Projection
 	m_curquat = trackball(0, 0, 0, 0);
@@ -100,21 +126,35 @@ window.onload = function init() {
     } );
 	
 	/// Initialize environment
-	heightMap("scene/s01.bin", 2);	// Builds mesh from heightmap file
 	
-    render();
+	/*
+	var image = new Image();
+    image.onload = function() {
+		configureTexture( image );
+    }
+    image.src = "textures/grass.png"
+	*/
+	var image = document.getElementById("texImage");
+	
+    configureTexture( image );
+	
+	//console.log(texCoordsArray.length, vTerrain.length)
+	
+    setTimeout(function(){render()}, 100); // wait 100ms to call render()
 }
 
 function render() {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-	
+	//console.log("render");
 	// Set camera
 	m_inc = mult(mat4(), build_rotmatrix(m_curquat));
 	var m_mv = mult(m_inc, rotationMatrix);
-	m_mv = mult(m_mv, translate(0, 5, 0));
-	mvpMatrix = mult(ortho(-5, 5, -5, 5, -50, 100), m_mv);		// Parallel
+	m_mv = mult(m_mv, translate(-0.5, -0.5, 0));
+	mvpMatrix = mult(ortho(-0.5, 0.5, -0.5, 0.5, -50, 100), m_mv);		// Parallel
 	//mvpMatrix = mult(perspective(60, 1.0,  -10, 10), m_mv);	// Perspective
 	gl.uniformMatrix4fv(mvpMatrixLoc, false, flatten(mvpMatrix));
+	
+	//console.log(texCoordsArray.length, vTerrain.length)
 	
 	// Draw terrain
 	gl.uniform1i(cindex, 1);

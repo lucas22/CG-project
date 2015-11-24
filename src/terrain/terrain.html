@@ -4,25 +4,37 @@
 <script id="vertex-shader" type="x-shader/x-vertex">
 	attribute  	vec4 vPosition;
 	attribute  	vec4 vColor;
+	attribute  	vec2 vTexCoord;
+	
 	varying		vec4 fColor;
+	varying 	vec2 fTexCoord;
 
-	uniform mat4 mvpMatrix;
-	uniform int cindex;
+	uniform 	mat4 mvpMatrix;
+	uniform 	int  cindex;
 
 	void main(){
 		gl_PointSize = 3.0;
-		gl_Position = mvpMatrix * vPosition;
+		
 		if(cindex==0) fColor = vec4(0.0,0.6,0.2,1.0); 	// green
 		if(cindex==1) fColor = vec4(0.75,0.85,1.0,1.0);	// light blue
 		else fColor = vec4(0.0,0.0,0.0,1.0); 			// black
+		
+		fTexCoord = vTexCoord;
+		gl_Position = mvpMatrix * vPosition;
 	}
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
 	precision mediump float;
 	varying vec4 fColor;
+	varying  vec2 fTexCoord;
+
+	uniform sampler2D texture;
 	void main() {
-		gl_FragColor = fColor;
+		vec4 color;
+		//color = fColor;
+		color = texture2D( texture, fTexCoord );
+		gl_FragColor = color;
 	}
 </script>
 
@@ -34,6 +46,8 @@
 <script type="text/javascript" src="heightMap.js"></script>
 <script type="text/javascript" src="cubeGenerator.js"></script>
 <script type="text/javascript" src="terrain.js"></script>
+
+<img id = "texImage" src = "textures/grass.png" hidden></img>
 
 <body>
 <canvas id="gl-canvas" width="900" height="600">
