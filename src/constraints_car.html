@@ -3,7 +3,7 @@
 <html>
 
 <head>
-	<title>Constraints, Car - Physijs</title>
+	<title>Demo</title>
 	
 	<link rel="stylesheet" type="text/css" href="css/styles.css" />
 	
@@ -26,12 +26,12 @@
 		car = {};
 	
 	initScene = function() {
-		renderer = new THREE.WebGLRenderer({ antialias: true });
-		renderer.setSize( window.innerWidth, window.innerHeight );
+		renderer = new THREE.WebGLRenderer({ antialias: false/*true*/ });
+		renderer.setSize( window.innerWidth/2, window.innerHeight/2 );
 		renderer.shadowMap.enabled = true;
 		renderer.shadowMapSoft = true;
 		document.getElementById( 'viewport' ).appendChild( renderer.domElement );
-		
+/*		
 		render_stats = new Stats();
 		render_stats.domElement.style.position = 'absolute';
 		render_stats.domElement.style.top = '0px';
@@ -43,7 +43,7 @@
 		physics_stats.domElement.style.top = '50px';
 		physics_stats.domElement.style.zIndex = 100;
 		document.getElementById( 'viewport' ).appendChild( physics_stats.domElement );
-		
+*/		
 		scene = new Physijs.Scene;
 		scene.setGravity(new THREE.Vector3( 0, -30, 0 ));
 		scene.addEventListener(
@@ -103,8 +103,8 @@
 		*/
 	
 		ground_material = Physijs.createMaterial(
-			new THREE.MeshLambertMaterial({ map: loader.load( 'images/grass.png' ) }),
-			.8, // high friction
+			new THREE.MeshLambertMaterial({ map: loader.load( 'images/plywood.jpg' ) }),
+			1, // high friction
 			.4 // low restitution
 		);
 		ground_material.map.wrapS = ground_material.map.wrapT = THREE.RepeatWrapping;
@@ -116,7 +116,7 @@
 		ground_geometry = new THREE.PlaneGeometry( 75, 75, 50, 50 );
 		for ( var i = 0; i < ground_geometry.vertices.length; i++ ) {
 			var vertex = ground_geometry.vertices[i];
-			vertex.z = NoiseGen.noise( vertex.x / 10, vertex.y / 10 ) * 2;
+			vertex.z = NoiseGen.noise( vertex.x / 10, vertex.y / 10 ) /* 2*/;
 		}
 		ground_geometry.computeFaceNormals();
 		ground_geometry.computeVertexNormals();
@@ -137,16 +137,16 @@
 		// Car
 		car_material = Physijs.createMaterial(
 			new THREE.MeshLambertMaterial({ color: 0xff6666 }),
-			.8, // high friction
+			1, // high friction
 			.2 // low restitution
 		);
 		
 		wheel_material = Physijs.createMaterial(
 			new THREE.MeshLambertMaterial({ color: 0x444444 }),
-			.8, // high friction
+			1, // high friction
 			.5 // medium restitution
 		);
-		wheel_geometry = new THREE.CylinderGeometry( 2, 2, 1, 50 );
+		wheel_geometry = new THREE.CylinderGeometry( 2, 2, 1, 20 );
 		
 		car.body = new Physijs.BoxMesh(
 			new THREE.BoxGeometry( 10, 5, 7 ),
@@ -227,32 +227,40 @@
 				switch( ev.keyCode ) {
 					case 37:
 						// Left
-						car.wheel_fl_constraint.configureAngularMotor( 1, -Math.PI / 2, Math.PI / 2, 1, 200 );
-						car.wheel_fr_constraint.configureAngularMotor( 1, -Math.PI / 2, Math.PI / 2, 1, 200 );
+						car.wheel_fl_constraint.configureAngularMotor( 1, -Math.PI / 3, Math.PI / 3, 5, 200 );
+						car.wheel_fr_constraint.configureAngularMotor( 1, -Math.PI / 3, Math.PI / 3, 5, 200 );
 						car.wheel_fl_constraint.enableAngularMotor( 1 );
 						car.wheel_fr_constraint.enableAngularMotor( 1 );
 						break;
 					
 					case 39:
 						// Right
-						car.wheel_fl_constraint.configureAngularMotor( 1, -Math.PI / 2, Math.PI / 2, -1, 200 );
-						car.wheel_fr_constraint.configureAngularMotor( 1, -Math.PI / 2, Math.PI / 2, -1, 200 );
+						car.wheel_fl_constraint.configureAngularMotor( 1, -Math.PI / 3, Math.PI / 3, -5, 200 );
+						car.wheel_fr_constraint.configureAngularMotor( 1, -Math.PI / 3, Math.PI / 3, -5, 200 );
 						car.wheel_fl_constraint.enableAngularMotor( 1 );
 						car.wheel_fr_constraint.enableAngularMotor( 1 );
 						break;
 					
 					case 38:
 						// Up
-						car.wheel_bl_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
-						car.wheel_br_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
+						//car.wheel_fl_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
+						//car.wheel_fr_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
+						car.wheel_bl_constraint.configureAngularMotor( 2, 1, 0, 50, 5000 );
+						car.wheel_br_constraint.configureAngularMotor( 2, 1, 0, 50, 5000 );
+						//car.wheel_fl_constraint.enableAngularMotor( 2 );
+						//car.wheel_fr_constraint.enableAngularMotor( 2 );
 						car.wheel_bl_constraint.enableAngularMotor( 2 );
 						car.wheel_br_constraint.enableAngularMotor( 2 );
 						break;
 					
 					case 40:
 						// Down
-						car.wheel_bl_constraint.configureAngularMotor( 2, 1, 0, -5, 2000 );
-						car.wheel_br_constraint.configureAngularMotor( 2, 1, 0, -5, 2000 );
+						//car.wheel_fl_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
+						//car.wheel_fr_constraint.configureAngularMotor( 2, 1, 0, 5, 2000 );
+						car.wheel_bl_constraint.configureAngularMotor( 2, 1, 0, -50, 5000 );
+						car.wheel_br_constraint.configureAngularMotor( 2, 1, 0, -50, 5000 );
+						//car.wheel_fl_constraint.enableAngularMotor( 2 );
+						//car.wheel_fr_constraint.enableAngularMotor( 2 );
 						car.wheel_bl_constraint.enableAngularMotor( 2 );
 						car.wheel_br_constraint.enableAngularMotor( 2 );
 						break;
@@ -299,7 +307,7 @@
 	render = function() {
 		requestAnimationFrame( render );
 		renderer.render( scene, camera );
-		render_stats.update();
+		//render_stats.update();
 	};
 	
 	window.onload = initScene;
@@ -308,10 +316,12 @@
 </head>
 
 <body>
+<!--
 	<div id="heading">
 		<h1>Constraints - Car</h1>
 		<p>Use the arrow keys to drive around.</p>
 	</div>
+-->
 	<div id="viewport"></div>
 </body>
 
