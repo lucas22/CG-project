@@ -1,5 +1,4 @@
 # Computer Graphics CSE40166 webGL project
-# ----------------------------------------
 
 ## What is it about?
 
@@ -10,5 +9,5 @@ applied.
 ## Credits
 
 Codes used include the following:
-  - mrdoob for Three.js
-  - chandlerprall for Physijs plugin for Three.js
+  - Three.js by mrdoob
+  - Physijs by chandlerprall (physics plugin for Three.js)
