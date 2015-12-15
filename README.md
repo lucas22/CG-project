@@ -2,12 +2,14 @@
 
 ## What is it about?
 
-In this project, the goal is to build a 3­dimensional demonstration that contains a controllable 3D
-vehicle over an uneven terrain with obstacles. Collisions will be detected and proper physics
-applied.
+In this project, the goal is to build a 3­dimensional demonstration that contains a controllable 3D vehicle over an uneven terrain with obstacles. Collisions will be detected and proper physics applied.
 
 ## Credits
 
+Contributors:
+	- Artur Pimentel
+	- Lucas Parzianello
+
 Codes used include the following:
-  - Three.js by mrdoob
-  - Physijs by chandlerprall (physics plugin for Three.js)
+	- Three.js by mrdoob
+	- Physijs by chandlerprall (physics plugin for Three.js)
